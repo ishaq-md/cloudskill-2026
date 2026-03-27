@@ -42,6 +42,7 @@ export PROJECT_ID=$(gcloud config get-value core/project)
 export SA_NAME="document-ai-service-account"
 gcloud iam service-accounts create $SA_NAME --display-name $SA_NAME
 
+
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
 --member="serviceAccount:$SA_NAME@${PROJECT_ID}.iam.gserviceaccount.com" \
 --role="roles/documentai.apiUser"
@@ -86,7 +87,7 @@ cat output.json | jq -r ".document.text"
 # Instruction before downloading the Python script
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 7:${RESET_FORMAT} ${GREEN_TEXT}Downloading the Python script for synchronous processing.${RESET_FORMAT}"
-gsutil cp gs://cloud-training/gsp924/synchronous_doc_ai.py .
+gsutil cp gs://spls/gsp924/synchronous_doc_ai.py .
 
 # Instruction before installing Python dependencies
 echo
