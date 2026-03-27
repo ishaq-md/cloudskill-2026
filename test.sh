@@ -54,7 +54,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="$PWD/key.json"
 # Instruction before downloading the sample PDF
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 3:${RESET_FORMAT} ${GREEN_TEXT}Downloading the sample PDF file for processing.${RESET_FORMAT}"
-gsutil cp gs://cloud-training/gsp924/health-intake-form.pdf .
+gsutil cp gs://spls/gsp924/health-intake-form.pdf .
 
 # Instruction before creating the JSON request
 echo
@@ -63,6 +63,7 @@ echo '{"inlineDocument": {"mimeType": "application/pdf","content": "' > temp.jso
 base64 health-intake-form.pdf >> temp.json
 echo '"}}' >> temp.json
 cat temp.json | tr -d \\n > request.json
+
 
 # Instruction before sending the API request
 echo
