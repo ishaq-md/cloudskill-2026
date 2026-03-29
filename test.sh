@@ -74,7 +74,7 @@ cat temp.json | tr -d \\n > request.json
 # Instruction before sending the API request
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 5:${RESET_FORMAT} ${GREEN_TEXT}Sending the request to the Document AI API. This might take some time.${RESET_FORMAT}"
-sleep 10
+sleep 18
 export LOCATION="us"
 export PROJECT_ID=$(gcloud config get-value core/project)
 curl -X POST \
@@ -86,7 +86,6 @@ https://${LOCATION}-documentai.googleapis.com/v1beta3/projects/${PROJECT_ID}/loc
 # Instruction before displaying the output
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 6:${RESET_FORMAT} ${GREEN_TEXT}Displaying the processed document text.${RESET_FORMAT}"
-sleep 12
 cat output.json | jq -r ".document.text"
 
 # Instruction before downloading the Python script
