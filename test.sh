@@ -51,7 +51,7 @@ gsutil cp gs://cloud-training/gsp924/health-intake-form.pdf .
 # Instruction before creating the JSON request
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 4:${RESET_FORMAT} ${GREEN_TEXT}Preparing the JSON request for Document AI API.${RESET_FORMAT}"
-sleep 20
+sleep 18
 echo '{"inlineDocument": {"mimeType": "application/pdf","content": "' > temp.json
 base64 health-intake-form.pdf >> temp.json
 echo '"}}' >> temp.json
