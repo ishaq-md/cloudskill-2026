@@ -15,17 +15,6 @@ BOLD_TEXT=$'\033[1m'
 UNDERLINE_TEXT=$'\033[4m'
 clear # Clear the terminal screen
 
-export PROJECT_ID=$(gcloud config get-value project)
-curl -X POST \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "form-parser",
-    "type": "FORM_PARSER_PROCESSOR"
-  }' \
-  "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors"
-
-
 echo
 echo "${BLUE_TEXT}${BOLD_TEXT}╔══════════════════════════════════════╗${RESET_FORMAT}"
 echo "${BLUE_TEXT}${BOLD_TEXT}║   WELCOME TO DR ABHISHEK CLOUD      ║${RESET_FORMAT}"
