@@ -15,11 +15,26 @@ BOLD_TEXT=$'\033[1m'
 UNDERLINE_TEXT=$'\033[4m'
 clear # Clear the terminal screen
 
-# Instruction for entering the Processor ID
+# ─── Enable API & Create Processor ────────────────────────────────────────────
 echo
-echo "${CYAN_TEXT}${BOLD_TEXT}Please enter your Processor ID:${RESET_FORMAT}"
-read -r PROCESSOR_ID
-export PROCESSOR_ID
+echo "${CYAN}${BOLD}Enabling Document AI API...${RESET}"
+gcloud services enable documentai.googleapis.com
+
+export PROJECT_ID=$(gcloud config get-value project)
+
+echo
+echo "${CYAN}${BOLD}Creating Form Parser Processor...${RESET}"
+export PROCESSOR_ID=$(curl -s -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "form-parser",
+    "type": "FORM_PARSER_PROCESSOR"
+  }' \
+  "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors" \
+  | jq -r '.name | split("/") | last')
+
+echo "${GREEN}${BOLD}Processor ID: ${PROCESSOR_ID}${RESET}"
 
 # Instruction before updating and installing dependencies
 echo
