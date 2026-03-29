@@ -35,6 +35,17 @@ export PROJECT_ID=$PROJECT_ID
 export PROCESSOR_ID=$PROCESSOR_ID
 export LOCATION="us"
 
+curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"rawDocument\": {
+      \"content\": \"$(base64 -w 0 form.pdf)\",
+      \"mimeType\": \"application/pdf\"
+    }
+  }" \
+  "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors/${PROCESSOR_ID}:process"
+
 # Task 3: Authenticate API requests
 export SA_NAME="document-ai-service-account"
 gcloud iam service-accounts create \$SA_NAME --display-name \$SA_NAME --quiet || true
