@@ -39,7 +39,8 @@ echo
 # Instruction for entering the Processor ID
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Please enter your Processor ID:${RESET_FORMAT}"
-read -r PROCESSOR_ID
+#read -r PROCESSOR_ID
+echo "My Processor ID is: $PROCESSOR_ID"
 export PROCESSOR_ID
 
 # Instruction before updating and installing dependencies
