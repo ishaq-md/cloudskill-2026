@@ -70,6 +70,7 @@ https://${LOCATION}-documentai.googleapis.com/v1beta3/projects/${PROJECT_ID}/loc
 # Instruction before displaying the output
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 6:${RESET_FORMAT} ${GREEN_TEXT}Displaying the processed document text.${RESET_FORMAT}"
+sleep 15
 cat output.json | jq -r ".document.text"
 
 # Instruction before downloading the Python script
