@@ -15,6 +15,20 @@ BOLD_TEXT=$'\033[1m'
 UNDERLINE_TEXT=$'\033[4m'
 clear # Clear the terminal screen
 
+gcloud services enable documentai.googleapis.com
+export ZONE=$(gcloud compute instances list document-ai-dev --format 'csv[no-heading](zone)')
+gcloud compute ssh document-ai-dev --project=$DEVSHELL_PROJECT_ID --zone=$ZONE --quiet
+export PROJECT_ID=$(gcloud config get-value project)
+
+curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "form-parser",
+    "type": "FORM_PARSER_PROCESSOR"
+  }' \
+  "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors"
+
 
 echo
 echo "${BLUE_TEXT}${BOLD_TEXT}╔══════════════════════════════════════╗${RESET_FORMAT}"
