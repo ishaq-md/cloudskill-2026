@@ -74,7 +74,7 @@ cat temp.json | tr -d \\n > request.json
 # Instruction before sending the API request
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 5:${RESET_FORMAT} ${GREEN_TEXT}Sending the request to the Document AI API. This might take some time.${RESET_FORMAT}"
-sleep 10
+sleep 12
 export LOCATION="us"
 export PROJECT_ID=$(gcloud config get-value core/project)
 curl -X POST \
