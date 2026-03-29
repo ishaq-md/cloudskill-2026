@@ -15,7 +15,6 @@ BOLD_TEXT=$'\033[1m'
 UNDERLINE_TEXT=$'\033[4m'
 clear # Clear the terminal screen
 
-
 # Instruction for entering the Processor ID
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Please enter your Processor ID:${RESET_FORMAT}"
