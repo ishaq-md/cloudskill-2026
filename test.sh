@@ -14,29 +14,13 @@ RESET_FORMAT=$'\033[0m'
 BOLD_TEXT=$'\033[1m'
 UNDERLINE_TEXT=$'\033[4m'
 clear # Clear the terminal screen
-gcloud services enable documentai.googleapis.com
-export PROJECT_ID=$(gcloud config get-value project)
-# 2. The exact GUI-equivalent POST call
-curl -X POST \
-  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "lab-form-parser",
-    "type": "FORM_PARSER_PROCESSOR"
-  }' \
-  "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors"
-echo "My Processor ID is: $PROCESSOR_ID"
-export PROCESSOR_ID
 
-export ZONE=$(gcloud compute instances list document-ai-dev --format 'csv[no-heading](zone)')
-gcloud compute ssh document-ai-dev --project=$DEVSHELL_PROJECT_ID --zone=$ZONE --quiet
 
-# Instruction before updating and installing dependencies
+# Instruction for entering the Processor ID
 echo
-echo "${CYAN_TEXT}${BOLD_TEXT}Step 1:${RESET_FORMAT} ${GREEN_TEXT}Updating the system and installing required dependencies.${RESET_FORMAT}"
-sudo apt-get update
-sudo apt-get install jq -y
-sudo apt-get install python3-pip -y
+echo "${CYAN_TEXT}${BOLD_TEXT}Please enter your Processor ID:${RESET_FORMAT}"
+read -r PROCESSOR_ID
+export PROCESSOR_ID
 
 # Instruction before creating a service account
 echo
