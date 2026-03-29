@@ -1,26 +1,26 @@
 #!/bin/bash
 
+# ===============================
+# Colors for clarity
+# ===============================
 CYAN='\033[0;96m'
 GREEN='\033[0;92m'
 RED='\033[0;91m'
 RESET='\033[0m'
 
-echo "${CYAN}🚀 Starting FULL Document AI Lab Script...${RESET}"
+echo -e "${CYAN}🚀 Starting FULL Document AI Lab Script...${RESET}"
 
 # -------------------------------
-# Task 1: Setup
+# 1. Set Project ID & Enable API
 # -------------------------------
-PROJECT_ID=$(gcloud config get-value project)
+export PROJECT_ID=$(gcloud config get-value project)
 gcloud services enable documentai.googleapis.com --quiet
-
-sudo apt-get update -y >/dev/null 2>&1
-sudo apt-get install jq -y >/dev/null 2>&1
+echo -e "${GREEN}✅ Document AI API enabled${RESET}"
 
 # -------------------------------
-# Task 2: Create Processor
+# 2. Create 'form-parser' Processor
 # -------------------------------
-echo "${GREEN}Creating processor...${RESET}"
-
+echo -e "${GREEN}Creating processor...${RESET}"
 RESPONSE=$(curl -s -X POST \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/json" \
@@ -30,113 +30,108 @@ RESPONSE=$(curl -s -X POST \
   }' \
   "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors")
 
-PROCESSOR_ID=$(echo "$RESPONSE" | jq -r '.name' | awk -F'/' '{print $NF}')
+# Extract processor ID
+PROCESSOR_ID=$(echo $RESPONSE | jq -r '.name' | sed 's|.*/||')
 
-if [ -z "$PROCESSOR_ID" ] || [ "$PROCESSOR_ID" = "null" ]; then
-  echo "${RED}❌ Processor creation failed${RESET}"
-  echo "$RESPONSE"
-  exit 1
+# Handle duplicate processor
+if [ "$PROCESSOR_ID" == "null" ] || [ -z "$PROCESSOR_ID" ]; then
+    echo -e "${RED}Processor creation failed or already exists. Fetching existing processor ID...${RESET}"
+    PROCESSOR_ID=$(gcloud documentai processors list \
+        --project=$PROJECT_ID --location=us \
+        --filter="display_name:form-parser" \
+        --format="value(name)" | sed 's|.*/||')
 fi
 
-echo "${CYAN}Processor ID: $PROCESSOR_ID${RESET}"
+echo -e "${CYAN}Processor ID: $PROCESSOR_ID${RESET}"
 
 # -------------------------------
-# Task 3: Connect to VM
+# 3. Set VM Zone
 # -------------------------------
-ZONE=$(gcloud compute instances list \
-  --filter="name:document-ai-dev" \
-  --format='value(zone)' | head -n 1)
+ZONE=$(gcloud compute instances list --filter="name:document-ai-dev" --format='value(zone)' | head -n1)
 
-echo "${GREEN}Running all lab tasks inside VM...${RESET}"
-
-gcloud compute ssh document-ai-dev \
-  --zone=$ZONE \
-  --quiet \
-  --command="
 # -------------------------------
-# Inside VM
+# 4. Prepare commands for VM
 # -------------------------------
-PROJECT_ID=$PROJECT_ID
-PROCESSOR_ID=$PROCESSOR_ID
-LOCATION=us
+REMOTE_COMMANDS=$(cat <<EOF
+export PROJECT_ID=$PROJECT_ID
+export PROCESSOR_ID=$PROCESSOR_ID
+export LOCATION="us"
 
-echo '🔐 Creating Service Account...'
-SA_NAME='document-ai-service-account'
-
-gcloud iam service-accounts create \$SA_NAME --display-name=\$SA_NAME --quiet || true
+# -------------------------------
+# 4a. Create Service Account
+# -------------------------------
+echo -e "${GREEN}🔐 Creating Service Account...${RESET}"
+export SA_NAME="document-ai-service-account"
+gcloud iam service-accounts create \$SA_NAME --display-name \$SA_NAME --quiet || true
 
 gcloud projects add-iam-policy-binding \$PROJECT_ID \
-  --member=\"serviceAccount:\$SA_NAME@\${PROJECT_ID}.iam.gserviceaccount.com\" \
-  --role=\"roles/documentai.apiUser\" --quiet
+  --member="serviceAccount:\$SA_NAME@\${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/documentai.apiUser" --quiet
 
 gcloud iam service-accounts keys create key.json \
   --iam-account \$SA_NAME@\${PROJECT_ID}.iam.gserviceaccount.com --quiet
 
-export GOOGLE_APPLICATION_CREDENTIALS=\"\$PWD/key.json\"
+export GOOGLE_APPLICATION_CREDENTIALS="\$PWD/key.json"
+echo -e "${GREEN}✅ Service Account created and credentials set${RESET}"
 
-echo '📥 Downloading sample form...'
+# -------------------------------
+# 4b. Download sample form
+# -------------------------------
+echo -e "${GREEN}📥 Downloading sample form...${RESET}"
 gsutil cp gs://spls/gsp924/health-intake-form.pdf .
 
-# -------------------------------
-# Task 3: Create request.json
-# -------------------------------
-echo '📝 Creating request.json...'
-echo '{\"inlineDocument\": {\"mimeType\": \"application/pdf\",\"content\": \"' > temp.json
+# Create JSON request for curl
+echo -e "${GREEN}📝 Creating request.json...${RESET}"
+echo '{"inlineDocument": {"mimeType": "application/pdf","content": "' > temp.json
 base64 health-intake-form.pdf | tr -d '\n' >> temp.json
-echo '\"}}' >> temp.json
+echo '"}}' >> temp.json
 cat temp.json | tr -d '\n' > request.json
 
 # -------------------------------
-# Task 4: CURL API CALL
+# 4c. Synchronous curl request
 # -------------------------------
-echo '🚀 Calling Document AI API...'
+echo -e "${GREEN}🚀 Calling Document AI API...${RESET}"
 curl -s -X POST \
-  -H \"Authorization: Bearer \$(gcloud auth application-default print-access-token)\" \
-  -H \"Content-Type: application/json; charset=utf-8\" \
+  -H "Authorization: Bearer \$(gcloud auth application-default print-access-token)" \
+  -H "Content-Type: application/json; charset=utf-8" \
   -d @request.json \
-  \"https://\${LOCATION}-documentai.googleapis.com/v1beta3/projects/\${PROJECT_ID}/locations/\${LOCATION}/processors/\${PROCESSOR_ID}:process\" \
-  > output.json
+  "https://\${LOCATION}-documentai.googleapis.com/v1beta3/projects/\${PROJECT_ID}/locations/\${LOCATION}/processors/\${PROCESSOR_ID}:process" > output.json
 
-echo '✅ API response saved to output.json'
+echo -e "${GREEN}✅ API response saved to output.json${RESET}"
 
-# -------------------------------
-# Task 4: Extract data using jq
-# -------------------------------
-sudo apt-get update -y >/dev/null 2>&1
-sudo apt-get install jq -y >/dev/null 2>&1
+# Extract text and form fields using jq
+sudo apt-get update -qq
+sudo apt-get install -y jq
 
-echo '📄 Extracted text:'
-cat output.json | jq -r '.document.text' | head -n 20
+echo -e "${GREEN}📄 Extracted text:${RESET}"
+cat output.json | jq -r ".document.text"
 
-echo '📊 Form fields:'
-cat output.json | jq -r '.document.pages[].formFields' | head -n 20
+echo -e "${GREEN}📊 Form fields:${RESET}"
+cat output.json | jq -r ".document.pages[].formFields"
 
 # -------------------------------
-# Task 5: Python setup
+# 5. Python Client Processing
 # -------------------------------
-echo '🐍 Installing Python dependencies...'
-sudo apt-get install python3-pip -y >/dev/null 2>&1
-python3 -m ensurepip --upgrade || true
-python3 -m pip install --upgrade pip --quiet
-python3 -m pip install google-cloud-documentai google-cloud-storage prettytable --quiet
+echo -e "${GREEN}🐍 Installing Python dependencies...${RESET}"
+sudo apt install -y python3-pip
+python3 -m pip install --upgrade google-cloud-documentai google-cloud-storage prettytable --quiet
 
-# -------------------------------
-# Task 5: Download Python script
-# -------------------------------
+echo -e "${GREEN}📂 Downloading Python sample code...${RESET}"
 gsutil cp gs://spls/gsp924/synchronous_doc_ai.py .
 
-# -------------------------------
-# Task 6: Run Python script
-# -------------------------------
-echo '🚀 Running Python Document AI script...'
-
+echo -e "${GREEN}🚀 Running Python script...${RESET}"
 python3 synchronous_doc_ai.py \
   --project_id=\$PROJECT_ID \
   --processor_id=\$PROCESSOR_ID \
   --location=\$LOCATION \
-  --file_name=health-intake-form.pdf | tee results.txt
+  --file_name=health-intake-form.pdf
+EOF
+)
 
-echo '🎉 All VM tasks completed!'
-"
+# -------------------------------
+# 6. Execute everything inside VM
+# -------------------------------
+echo -e "${GREEN}🚀 Running all lab tasks inside VM...\n${RESET}"
+gcloud compute ssh document-ai-dev --project=$PROJECT_ID --zone=$ZONE --quiet --command="$REMOTE_COMMANDS"
 
-echo "${CYAN}✅ FULL LAB COMPLETED — Click all 'Check my progress' buttons.${RESET}"
+echo -e "${CYAN}✅ Lab Script Completed! Check your output.json and Python results.${RESET}"
