@@ -21,6 +21,12 @@ echo "${CYAN_TEXT}${BOLD_TEXT}Please enter your Processor ID:${RESET_FORMAT}"
 read -r PROCESSOR_ID
 export PROCESSOR_ID
 
+# Instruction before updating and installing dependencies
+echo
+echo "${CYAN_TEXT}${BOLD_TEXT}Step 1:${RESET_FORMAT} ${GREEN_TEXT}Updating the system and installing required dependencies.${RESET_FORMAT}"
+sudo apt-get update
+sudo apt-get install python3-pip -y --no-install-recommends
+
 # Instruction before creating a service account
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 2:${RESET_FORMAT} ${GREEN_TEXT}Creating a service account for Document AI and setting up permissions.${RESET_FORMAT}"
