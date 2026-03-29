@@ -15,6 +15,19 @@ BOLD_TEXT=$'\033[1m'
 UNDERLINE_TEXT=$'\033[4m'
 clear # Clear the terminal screen
 
+gcloud services enable documentai.googleapis.com
+export ZONE=$(gcloud compute instances list document-ai-dev --format 'csv[no-heading](zone)')
+gcloud compute ssh document-ai-dev --project=$DEVSHELL_PROJECT_ID --zone=$ZONE --quiet
+export PROJECT_ID=$(gcloud config get-value project)
+curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "form-parser",
+    "type": "FORM_PARSER_PROCESSOR"
+  }' \
+  "https://us-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/us/processors"
+
 echo
 echo "${BLUE_TEXT}${BOLD_TEXT}╔══════════════════════════════════════╗${RESET_FORMAT}"
 echo "${BLUE_TEXT}${BOLD_TEXT}║   WELCOME TO DR ABHISHEK CLOUD      ║${RESET_FORMAT}"
@@ -43,6 +56,7 @@ export SA_NAME="document-ai-service-account"
 gcloud iam service-accounts create $SA_NAME --display-name $SA_NAME
 
 
+
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
 --member="serviceAccount:$SA_NAME@${PROJECT_ID}.iam.gserviceaccount.com" \
 --role="roles/documentai.apiUser"
@@ -69,7 +83,7 @@ cat temp.json | tr -d \\n > request.json
 # Instruction before sending the API request
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 5:${RESET_FORMAT} ${GREEN_TEXT}Sending the request to the Document AI API. This might take some time.${RESET_FORMAT}"
-sleep 15
+sleep 20
 export LOCATION="us"
 export PROJECT_ID=$(gcloud config get-value core/project)
 curl -X POST \
@@ -81,7 +95,7 @@ https://${LOCATION}-documentai.googleapis.com/v1beta3/projects/${PROJECT_ID}/loc
 # Instruction before displaying the output
 echo
 echo "${CYAN_TEXT}${BOLD_TEXT}Step 6:${RESET_FORMAT} ${GREEN_TEXT}Displaying the processed document text.${RESET_FORMAT}"
-sleep 10
+sleep 20
 cat output.json | jq -r ".document.text"
 
 # Instruction before downloading the Python script
